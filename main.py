@@ -20,17 +20,32 @@ def download_video():  # 단일 영상 다운로드
     merge_files()
     os.remove('./video/video.mp4')
     os.remove('./video/audio.mp4')
-    title = yt.title.replace('/','')
+    specialChars = "$:|/?\"*<>" 
+    title = yt.title
+    for specialChar in specialChars:
+        title = title.replace(specialChar, '')
     os.rename('./video/title.mp4', "./video/"+title+".mp4")
     print("sucess!")
 
 def download_playlist():  # 플레이리스트 다운로드
     url = input("플레이 리스트 주소를 입력하세요: ")
     p = Playlist(url)
+    itag = selec_quality(p.videos[0].streams)  # 플레이리스트 첫번째 영상으로 품질 선택
     print(f'Downloading playlist: {p.title}')
     for video in p.videos:
         print(f'Downloading: {video.title}')
-        video.streams.get_by_itag(22).download('./video')
+        # 선택한 품질의 비디오 다운로드
+        video.streams.get_by_itag(itag).download('./video', 'video.mp4')
+        # 최고 품질의 오디오 다운로드
+        video.streams.filter(adaptive=True, file_extension='mp4', only_audio=True).order_by('abr').desc().first().download('./video', 'audio.mp4')
+        merge_files()
+        os.remove('./video/video.mp4')
+        os.remove('./video/audio.mp4')
+        specialChars = "$:|/?\"*<>" 
+        title = video.title
+        for specialChar in specialChars:
+            title = title.replace(specialChar, '')
+        os.rename('./video/title.mp4', "./video/"+title+".mp4")
     print("sucess!")
 
 def selec_quality(yt_streams):  # 비도오 품질 선택 함수
